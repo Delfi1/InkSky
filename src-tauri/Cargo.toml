@@ -1,0 +1,20 @@
+[package]
+name = "inksky"
+version = "0.0.1"
+description = "Simple chat application"
+authors = ["delfi"]
+edition = "2021"
+
+[build-dependencies]
+tauri-build = { version = "2.0.0-beta", features = [] }
+
+[dependencies]
+# Tauri packages
+tauri = { version = "2.0.0-beta", features = [] }
+tauri-plugin-shell = "2.0.0-beta"
+tauri-plugin-updater = { version = "2.0.0-beta", features = ["rustls-tls"] }
+tauri-plugin-dialog = "2.0.0-beta"
+
+spacetimedb-sdk = "*"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
