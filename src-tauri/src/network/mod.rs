@@ -95,5 +95,4 @@ pub fn register(email: String, name: String, password: String) -> String {
 
 pub fn login(email: String, password: String) {
     bindings::login(email, password)
-
 }
