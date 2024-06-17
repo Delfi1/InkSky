@@ -1,17 +1,21 @@
 <script setup lang="ts">
 import { onMounted } from 'vue';
-import Login from "./components/Login.vue";
+import { invoke } from "@tauri-apps/api/core";
 
-const initialize = () => {
+async function debug(content: string) {
+  await invoke("debug", {content})
+}
 
-};
+async function initialize() {
+  await debug("Vue is initialized")
 
-onMounted(() => initialize());
+}
 
+onMounted(initialize)
 </script>
 
 <template>
-  <Login/>
+<h2>Test</h2>
 </template>
 
 <style>

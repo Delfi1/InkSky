@@ -5,31 +5,6 @@ mod network;
 use std::sync::OnceLock;
 use tauri::{AppHandle, Manager, RunEvent, WebviewUrl, WebviewWindow, WebviewWindowBuilder};
 
-static APP_HANDLE: OnceLock<AppHandle> = OnceLock::new();
-
-pub fn main_window() -> WebviewWindow {
-    APP_HANDLE.get().unwrap()
-        .get_webview_window("main")
-        .expect("Get window error")
-}
-
-#[tauri::command]
-fn register(name: String, email: String, password: String) -> String {
-    println!("Registration: {}, {}: {}...", email, name, password);
-
-    network::register(email, name, password)
-}
-
-#[tauri::command]
-fn is_email_taken(email: String) -> bool {
-    network::is_email_taken(&email)
-}
-
-#[tauri::command]
-fn login(email: String, password: String){
-    network::login(email, password)
-}
-
 #[tauri::command]
 fn debug(content: String) {
     println!("Debug: {}", content);
@@ -48,10 +23,10 @@ fn init_window(handle: &AppHandle) {
 
     let mut title = format!("InkSky v{}", env!("CARGO_PKG_VERSION"));
     #[cfg(debug_assertions)]
-    { title += "dev" }
-
-    #[cfg(debug_assertions)]
-    let builder = builder.always_on_top(true);
+    let builder = {
+        title += "dev";
+        builder.always_on_top(true)
+    };
 
     let builder = builder.title(title);
 
@@ -66,7 +41,7 @@ fn main() {
     let app = tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_dialog::init())
-        .invoke_handler(tauri::generate_handler![register, login, debug, error, is_email_taken])
+        .invoke_handler(tauri::generate_handler![debug, error])
         .build(tauri::generate_context!())
         .expect("error while running tauri application");
 
@@ -74,8 +49,6 @@ fn main() {
         RunEvent::Ready => {
             network::init();
             init_window(handle);
-            let app_handle = handle.clone();
-            APP_HANDLE.get_or_init(|| { app_handle });
             println!("Ready!");
         },
         _ => ()

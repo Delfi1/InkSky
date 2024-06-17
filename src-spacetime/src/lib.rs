@@ -122,14 +122,13 @@ fn login(ctx: ReducerContext, email: String, password: String) -> Result<(), Str
             Err("Incorrect password".to_string())
         }
     } else {
-        Err("User not found".to_string())
+        Err("User with this email is not found".to_string())
     }
 }
 
 #[spacetimedb(reducer)]
 pub fn delete_account(ctx: ReducerContext) {
     if let Some(creds) = get_creds_by_ctx(&ctx) {
-        debug!("Deleting...");
         User::delete_by_primary_id(&creds.primary_id);
         Credentials::delete_by_primary_id(&creds.primary_id);
     }
