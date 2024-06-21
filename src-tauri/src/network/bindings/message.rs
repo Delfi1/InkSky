@@ -14,7 +14,44 @@ use spacetimedb_sdk::{
 
 #[derive(Serialize, Deserialize, Clone, PartialEq, Debug)]
 pub struct Message {
+    pub id: u64,
+    pub reply: Option<u64>,
     pub sender: u64,
     pub content: String,
     pub time: u64,
+}
+
+impl TableType for Message {
+    const TABLE_NAME: &'static str = "Message";
+    type ReducerEvent = super::ReducerEvent;
+}
+
+impl TableWithPrimaryKey for Message {
+    type PrimaryKey = u64;
+    fn primary_key(&self) -> &Self::PrimaryKey {
+        &self.id
+    }
+}
+
+impl Message {
+    #[allow(unused)]
+    pub fn filter_by_id(id: u64) -> TableIter<Self> {
+        Self::filter(|row| row.id == id)
+    }
+    #[allow(unused)]
+    pub fn find_by_id(id: u64) -> Option<Self> {
+        Self::find(|row| row.id == id)
+    }
+    #[allow(unused)]
+    pub fn filter_by_sender(sender: u64) -> TableIter<Self> {
+        Self::filter(|row| row.sender == sender)
+    }
+    #[allow(unused)]
+    pub fn filter_by_content(content: String) -> TableIter<Self> {
+        Self::filter(|row| row.content == content)
+    }
+    #[allow(unused)]
+    pub fn filter_by_time(time: u64) -> TableIter<Self> {
+        Self::filter(|row| row.time == time)
+    }
 }

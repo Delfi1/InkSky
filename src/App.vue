@@ -6,16 +6,30 @@ async function debug(content: string) {
   await invoke("debug", {content})
 }
 
+async function connect() {
+  await invoke("connect", {})
+}
+
+async function is_login(): Promise<boolean> {
+  return await invoke("is_login", {});
+}
+
 async function initialize() {
   await debug("Vue is initialized")
+  await connect();
 
+  if (await is_login()) {
+    // todo: load chat page
+  } else {
+    // todo: load login page
+  }
 }
 
 onMounted(initialize)
 </script>
 
 <template>
-<h2>Test</h2>
+Placeholder
 </template>
 
 <style>

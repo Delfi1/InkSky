@@ -20,29 +20,40 @@ use spacetimedb_sdk::{
 };
 use std::sync::Arc;
 
+pub mod change_message_reducer;
+pub mod change_name_reducer;
 pub mod credentials;
 pub mod delete_account_reducer;
 pub mod login_reducer;
 pub mod logout_reducer;
+pub mod message;
 pub mod register_reducer;
+pub mod send_message_reducer;
 pub mod session;
 pub mod user;
 
+pub use change_message_reducer::*;
+pub use change_name_reducer::*;
 pub use credentials::*;
 pub use delete_account_reducer::*;
 pub use login_reducer::*;
 pub use logout_reducer::*;
+pub use message::*;
 pub use register_reducer::*;
+pub use send_message_reducer::*;
 pub use session::*;
 pub use user::*;
 
 #[allow(unused)]
 #[derive(Serialize, Deserialize, Clone, PartialEq, Debug)]
 pub enum ReducerEvent {
+    ChangeMessage(change_message_reducer::ChangeMessageArgs),
+    ChangeName(change_name_reducer::ChangeNameArgs),
     DeleteAccount(delete_account_reducer::DeleteAccountArgs),
     Login(login_reducer::LoginArgs),
     Logout(logout_reducer::LogoutArgs),
     Register(register_reducer::RegisterArgs),
+    SendMessage(send_message_reducer::SendMessageArgs),
 }
 
 #[allow(unused)]
@@ -61,6 +72,8 @@ impl SpacetimeModule for Module {
                     callbacks,
                     table_update,
                 ),
+            "Message" => client_cache
+                .handle_table_update_with_primary_key::<message::Message>(callbacks, table_update),
             "User" => client_cache
                 .handle_table_update_with_primary_key::<user::User>(callbacks, table_update),
             _ => {
@@ -76,6 +89,7 @@ impl SpacetimeModule for Module {
         state: &Arc<ClientCache>,
     ) {
         reminders.invoke_callbacks::<credentials::Credentials>(worker, &reducer_event, state);
+        reminders.invoke_callbacks::<message::Message>(worker, &reducer_event, state);
         reminders.invoke_callbacks::<user::User>(worker, &reducer_event, state);
     }
     fn handle_event(
@@ -90,6 +104,18 @@ impl SpacetimeModule for Module {
         };
         #[allow(clippy::match_single_binding)]
         match &function_call.reducer[..] {
+            "change_message" => _reducer_callbacks
+                .handle_event_of_type::<change_message_reducer::ChangeMessageArgs, ReducerEvent>(
+                    event,
+                    _state,
+                    ReducerEvent::ChangeMessage,
+                ),
+            "change_name" => _reducer_callbacks
+                .handle_event_of_type::<change_name_reducer::ChangeNameArgs, ReducerEvent>(
+                    event,
+                    _state,
+                    ReducerEvent::ChangeName,
+                ),
             "delete_account" => _reducer_callbacks
                 .handle_event_of_type::<delete_account_reducer::DeleteAccountArgs, ReducerEvent>(
                     event,
@@ -114,6 +140,12 @@ impl SpacetimeModule for Module {
                     _state,
                     ReducerEvent::Register,
                 ),
+            "send_message" => _reducer_callbacks
+                .handle_event_of_type::<send_message_reducer::SendMessageArgs, ReducerEvent>(
+                    event,
+                    _state,
+                    ReducerEvent::SendMessage,
+                ),
             unknown => {
                 spacetimedb_sdk::log::error!("Event on an unknown reducer: {:?}", unknown);
                 None
@@ -130,6 +162,9 @@ impl SpacetimeModule for Module {
         match table_name {
             "Credentials" => client_cache
                 .handle_resubscribe_for_type::<credentials::Credentials>(callbacks, new_subs),
+            "Message" => {
+                client_cache.handle_resubscribe_for_type::<message::Message>(callbacks, new_subs)
+            }
             "User" => client_cache.handle_resubscribe_for_type::<user::User>(callbacks, new_subs),
             _ => {
                 spacetimedb_sdk::log::error!("TableRowOperation on unknown table {:?}", table_name)

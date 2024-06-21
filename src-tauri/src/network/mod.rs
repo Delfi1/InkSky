@@ -9,6 +9,8 @@ use spacetimedb_sdk::{
     },
     subscribe
 };
+use spacetimedb_sdk::identity::Identity;
+use crate::network::bindings::User;
 
 mod bindings;
 
@@ -36,7 +38,8 @@ pub fn connect_to_db() {
     ).expect("Failed to connect");
 }
 
-pub fn init() {
+pub fn reconnect() {
+    spacetimedb_sdk::disconnect();
     init_callbacks();
     connect_to_db();
     subscribe_to_tables();
@@ -46,4 +49,9 @@ pub fn on_connected(creds: &Credentials, _address: Address) {
     if let Err(e) = save_credentials(CREDS_DIR, creds) {
         eprintln!("Failed to save credentials: {:?}", e);
     }
+}
+
+pub fn is_login() -> bool {
+    let identity = spacetimedb_sdk::identity::identity().expect("Read identity error");
+    User::find(|u| u.identities.contains(&identity)).is_some()
 }

@@ -68,6 +68,18 @@ fn set_online_by_ctx(ctx: &ReducerContext, state: bool) {
 }
 
 #[spacetimedb(reducer)]
+pub fn change_name(ctx: ReducerContext, new_name: String) -> Result<(), String> {
+    if let Some(mut user) = get_user_by_ctx(&ctx) {
+        user.name = new_name;
+        User::update_by_primary_id(&user.primary_id.clone(), user);
+
+        Ok(())
+    } else {
+        Err("User not found".to_string())
+    }
+}
+
+#[spacetimedb(reducer)]
 fn register(ctx: ReducerContext, email: String, password: String, name: String) -> Result<(), String> {
     if get_creds_by_ctx(&ctx).is_some() {
         return Err("Already in session".to_string())
@@ -96,18 +108,6 @@ fn register(ctx: ReducerContext, email: String, password: String, name: String) 
 }
 
 #[spacetimedb(reducer)]
-fn logout(ctx: ReducerContext) -> Result<(), String> {
-    if let Some(mut creds) = get_creds_by_ctx(&ctx) {
-        let index = creds.sessions.iter().position(|s| s.identity == ctx.sender).unwrap();
-        creds.sessions.remove(index);
-        Credentials::update_by_primary_id(&creds.primary_id.clone(), creds);
-        Ok(())
-    } else {
-        Err("User not found".to_string())
-    }
-}
-
-#[spacetimedb(reducer)]
 fn login(ctx: ReducerContext, email: String, password: String) -> Result<(), String> {
     if get_creds_by_ctx(&ctx).is_some() {
         return Err("Already in session".to_string())
@@ -127,10 +127,78 @@ fn login(ctx: ReducerContext, email: String, password: String) -> Result<(), Str
 }
 
 #[spacetimedb(reducer)]
+fn logout(ctx: ReducerContext) -> Result<(), String> {
+    if let Some(mut creds) = get_creds_by_ctx(&ctx) {
+        let index = creds.sessions.iter().position(|s| s.identity == ctx.sender).unwrap();
+        creds.sessions.remove(index);
+        Credentials::update_by_primary_id(&creds.primary_id.clone(), creds);
+        Ok(())
+    } else {
+        Err("User not found".to_string())
+    }
+}
+
+
+#[spacetimedb(reducer)]
 pub fn delete_account(ctx: ReducerContext) {
     if let Some(creds) = get_creds_by_ctx(&ctx) {
         User::delete_by_primary_id(&creds.primary_id);
         Credentials::delete_by_primary_id(&creds.primary_id);
+    }
+}
+
+#[spacetimedb(table)]
+pub struct Message {
+    #[autoinc]
+    #[primarykey]
+    id: u64,
+    // Another message id to reply
+    reply: Option<u64>,
+    // User primary_id
+    sender: u64,
+    content: String,
+    time: Timestamp
+}
+
+#[spacetimedb(reducer)]
+pub fn send_message(ctx: ReducerContext, reply: Option<u64>, content: String) -> Result<(), String> {
+    if let Some(user) = get_user_by_ctx(&ctx) {
+        if content.is_empty() {
+            return Err("Message is empty".to_string())
+        };
+
+        Message::insert(Message {
+            id: 0,
+            reply,
+            sender: user.primary_id,
+            content,
+            time: ctx.timestamp
+        }).expect("Message insert error");
+
+        Ok(())
+    } else { Err("User not found".to_string()) }
+}
+
+#[spacetimedb(reducer)]
+pub fn change_message(ctx: ReducerContext, message_id: u64, new_content: String) -> Result<(), String> {
+    if let Some(user) = get_user_by_ctx(&ctx) {
+        if let Some(message) = Message::filter_by_id(&message_id) {
+            //todo message content check
+            if message.sender == user.primary_id {
+                Message::update_by_id(&message.id.clone(), Message{
+                    content: new_content,
+                    ..message
+                });
+
+                Ok(())
+            } else {
+                Err("Access denied".to_string())
+            }
+        } else {
+            Err("Message not found".to_string())
+        }
+    } else {
+        Err("User not found".to_string())
     }
 }
 

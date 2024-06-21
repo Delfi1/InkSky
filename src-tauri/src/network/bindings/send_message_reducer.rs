@@ -14,7 +14,7 @@ use spacetimedb_sdk::{
 
 #[derive(Serialize, Deserialize, Clone, PartialEq, Debug)]
 pub struct SendMessageArgs {
-    pub chat_id: u64,
+    pub reply: Option<u64>,
     pub content: String,
 }
 
@@ -23,27 +23,29 @@ impl Reducer for SendMessageArgs {
 }
 
 #[allow(unused)]
-pub fn send_message(chat_id: u64, content: String) {
-    SendMessageArgs { chat_id, content }.invoke();
+pub fn send_message(reply: Option<u64>, content: String) {
+    SendMessageArgs { reply, content }.invoke();
 }
 
 #[allow(unused)]
 pub fn on_send_message(
-    mut __callback: impl FnMut(&Identity, Option<Address>, &Status, &u64, &String) + Send + 'static,
+    mut __callback: impl FnMut(&Identity, Option<Address>, &Status, &Option<u64>, &String)
+        + Send
+        + 'static,
 ) -> ReducerCallbackId<SendMessageArgs> {
     SendMessageArgs::on_reducer(move |__identity, __addr, __status, __args| {
-        let SendMessageArgs { chat_id, content } = __args;
-        __callback(__identity, __addr, __status, chat_id, content);
+        let SendMessageArgs { reply, content } = __args;
+        __callback(__identity, __addr, __status, reply, content);
     })
 }
 
 #[allow(unused)]
 pub fn once_on_send_message(
-    __callback: impl FnOnce(&Identity, Option<Address>, &Status, &u64, &String) + Send + 'static,
+    __callback: impl FnOnce(&Identity, Option<Address>, &Status, &Option<u64>, &String) + Send + 'static,
 ) -> ReducerCallbackId<SendMessageArgs> {
     SendMessageArgs::once_on_reducer(move |__identity, __addr, __status, __args| {
-        let SendMessageArgs { chat_id, content } = __args;
-        __callback(__identity, __addr, __status, chat_id, content);
+        let SendMessageArgs { reply, content } = __args;
+        __callback(__identity, __addr, __status, reply, content);
     })
 }
 
