@@ -23,5 +23,11 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ]
+  },
+  "plugins": {
+    "updater": {
+      "endpoints": ["https://github.com/Delfi1/InkSky/releases/latest/download/latest.json"],
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDkyQkZBNTZEMjREMzNCMUYKUldRZk85TWtiYVcva3BqVHF5NTBmcTdIN0lSQmZaS2tyRHlUcEhweW5OOCtZamdVQUlaU1ovOU0K"
+    }
   }
 }
